@@ -9,6 +9,18 @@
 
 $ErrorActionPreference = "Stop"
 
+# Cattura globale: se qualcosa va storto mostra l'errore PRIMA di chiudersi
+trap {
+    Write-Host ""
+    Write-Host "========================================================" -ForegroundColor Red
+    Write-Host "  ERRORE:" -ForegroundColor Red
+    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "========================================================" -ForegroundColor Red
+    Write-Host "Premi un tasto per chiudere..."
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit 1
+}
+
 function Write-Banner {
     Clear-Host
     Write-Host "========================================================" -ForegroundColor Cyan
