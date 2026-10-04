@@ -1,10 +1,10 @@
-
+﻿
 # ==============================================================================
 #  LLAMA-RPC-CLUSTER  |  install-master.ps1
 #  Master PC (il PC potente con GPU principale)
 #
 #  Esecuzione rapida (incolla nel terminale PowerShell come Amministratore):
-#  irm https://raw.githubusercontent.com/TUO_USERNAME/llama-rpc-cluster/main/scripts/install-master.ps1 | iex
+#  irm https://raw.githubusercontent.com/KingSalvo05/llama-rpc-cluster/main/scripts/install-master.ps1 | iex
 # ==============================================================================
 
 $ErrorActionPreference = "Stop"
@@ -191,3 +191,4 @@ Write-Host ""
 Write-Host " API OpenAI-compatibile: http://127.0.0.1:8080/v1" -ForegroundColor Green
 Write-Host ""
 Pause
+

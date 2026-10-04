@@ -1,10 +1,10 @@
-
+﻿
 # ==============================================================================
 #  LLAMA-RPC-CLUSTER  |  install-worker.ps1
 #  Worker PC (il vecchio PC con GPU secondaria - es. RTX 3050 4GB)
 #
 #  Esecuzione rapida (incolla nel terminale PowerShell come Amministratore):
-#  irm https://raw.githubusercontent.com/TUO_USERNAME/llama-rpc-cluster/main/scripts/install-worker.ps1 | iex
+#  irm https://raw.githubusercontent.com/KingSalvo05/llama-rpc-cluster/main/scripts/install-worker.ps1 | iex
 # ==============================================================================
 
 $ErrorActionPreference = "Stop"
@@ -156,3 +156,4 @@ Write-Host ""
 Write-Host " Questo PC risponde a: 192.168.50.2:50052" -ForegroundColor Green
 Write-Host ""
 Pause
+
