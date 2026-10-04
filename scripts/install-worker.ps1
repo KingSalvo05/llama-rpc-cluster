@@ -1,4 +1,4 @@
-﻿
+
 # ==============================================================================
 #  LLAMA-RPC-CLUSTER  |  install-worker.ps1
 #  Worker PC (il vecchio PC con GPU secondaria - es. RTX 3050 4GB)
@@ -31,7 +31,13 @@ function Write-Err([string]$msg)  { Write-Host "  [X]  $msg" -ForegroundColor Re
 Write-Banner
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
     Write-Warn "Rilancio con privilegi Amministratore..."
-    Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$($MyInvocation.MyCommand.Path)`""
+    $scriptPath = $MyInvocation.MyCommand.Path
+    if ($scriptPath -and (Test-Path $scriptPath)) {
+        Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`""
+    } else {
+        $url = "https://raw.githubusercontent.com/KingSalvo05/llama-rpc-cluster/main/scripts/install-worker.ps1"
+        Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command `"& { irm '$url' | iex }`""
+    }
     exit
 }
 

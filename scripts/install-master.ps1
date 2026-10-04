@@ -1,4 +1,4 @@
-﻿
+
 # ==============================================================================
 #  LLAMA-RPC-CLUSTER  |  install-master.ps1
 #  Master PC (il PC potente con GPU principale)
@@ -31,7 +31,15 @@ function Write-Err([string]$msg)  { Write-Host "  [X]  $msg" -ForegroundColor Re
 Write-Banner
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
     Write-Warn "Rilancio con privilegi Amministratore (necessari per configurare la rete)..."
-    Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$($MyInvocation.MyCommand.Path)`""
+    # Se eseguito come file .ps1 locale usa il percorso fisico;
+    # se eseguito via irm|iex non esiste un file su disco, quindi ri-scarica da URL.
+    $scriptPath = $MyInvocation.MyCommand.Path
+    if ($scriptPath -and (Test-Path $scriptPath)) {
+        Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`""
+    } else {
+        $url = "https://raw.githubusercontent.com/KingSalvo05/llama-rpc-cluster/main/scripts/install-master.ps1"
+        Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command `"& { irm '$url' | iex }`""
+    }
     exit
 }
 
