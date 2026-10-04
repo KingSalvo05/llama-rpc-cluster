@@ -1,110 +1,112 @@
 # llama-rpc-cluster
 
-**Collega due PC con un cavo Ethernet e unisci le loro GPU per caricare modelli IA enormi.**
+**Link two PCs with an Ethernet cable to combine their GPUs and run massive AI models locally.**
 
-Usando llama.cpp RPC, la VRAM del PC secondario (Worker) si aggiunge a quella del PC principale (Master),
-permettendo di caricare modelli come Qwen 2.5 32B che non entrerebbero in una sola scheda video.
-
----
-
-## Come funziona
-
-```
-PC MASTER (GPU principale)  <---CAT5e/CAT6--->  PC WORKER (GPU secondaria)
-RTX 5070 8GB                  Ethernet diretto   RTX 3050 4GB
-llama-server.exe                                 ggml-rpc-server.exe
-
-Risultato: 8 + 4 = 12 GB di VRAM disponibili per l'IA!
-```
-
-Il Master carica il modello e invia automaticamente i layer che non entrano nella propria GPU al Worker.
-Il cavo Ethernet diretto garantisce latenza minima (~0.1ms) e banda massima (1 Gbps).
+Using llama.cpp RPC, the VRAM of a secondary PC (Worker) is added to the main PC (Master),
+making it possible to load huge models like Qwen 2.5 32B that would never fit on a single GPU.
 
 ---
 
-## Installazione in 2 comandi
+## How it works
 
-> **Requisiti:** Windows 10/11, GPU Nvidia, cavo Ethernet CAT5e/CAT6, PowerShell 5+
+```
+MASTER PC (main GPU)        <--- CAT5e/CAT6 --->   WORKER PC (secondary GPU)
+RTX 5070 8GB                  direct Ethernet       RTX 3050 4GB
+llama-server.exe                                    ggml-rpc-server.exe
 
-### 1 - Sul PC MASTER (il piu' potente)
+Result: 8 + 4 = 12 GB of combined VRAM available for AI!
+```
 
-Apri **PowerShell come Amministratore** e incolla:
+The Master loads the model and automatically offloads the layers that do not fit in its own GPU
+to the Worker. A direct Ethernet cable (no router) ensures minimum latency (~0.1ms) and
+maximum bandwidth (1 Gbps).
+
+---
+
+## Installation - 2 commands, fully automatic
+
+> **Requirements:** Windows 10/11, Nvidia GPU, CAT5e or CAT6 Ethernet cable, PowerShell 5+
+
+### 1 - On the MASTER PC (the powerful one)
+
+Open **PowerShell as Administrator** and paste:
 
 ```powershell
 irm https://raw.githubusercontent.com/KingSalvo05/llama-rpc-cluster/main/scripts/install-master.ps1 | iex
 ```
 
-Lo script fa automaticamente:
-- Rileva la GPU Nvidia presente
-- Imposta IP statico `192.168.50.1` sulla porta Ethernet
-- Apre la porta 50052 sul firewall
-- Scarica l'ultima versione di llama.cpp con supporto CUDA
-- Trova tutti i modelli `.gguf` gia' presenti sul PC
-- Crea `Avvia_Cluster_MASTER.bat` sul Desktop
+The script will automatically:
+- Detect the Nvidia GPU
+- Set a static IP `192.168.50.1` on the Ethernet port
+- Open port 50052 on Windows Firewall
+- Download the latest llama.cpp release with CUDA support
+- Scan all drives for existing `.gguf` model files
+- Create `Avvia_Cluster_MASTER.bat` on your Desktop
 
-### 2 - Sul PC WORKER (il vecchio PC)
+### 2 - On the WORKER PC (the old one)
 
-Apri **PowerShell come Amministratore** e incolla:
+Open **PowerShell as Administrator** and paste:
 
 ```powershell
 irm https://raw.githubusercontent.com/KingSalvo05/llama-rpc-cluster/main/scripts/install-worker.ps1 | iex
 ```
 
-Lo script fa automaticamente:
-- Rileva la GPU Nvidia presente
-- Imposta IP statico `192.168.50.2` sulla porta Ethernet
-- Apre la porta 50052 sul firewall
-- Scarica llama.cpp con supporto CUDA
-- Crea `Avvia_Worker_RPC.bat` sul Desktop
-- (Opzionale) Configura avvio automatico all'accensione del PC
+The script will automatically:
+- Detect the Nvidia GPU
+- Set a static IP `192.168.50.2` on the Ethernet port
+- Open port 50052 on Windows Firewall
+- Download llama.cpp with CUDA support
+- Create `Avvia_Worker_RPC.bat` on your Desktop
+- (Optional) Register an auto-start task on Windows login
 
 ---
 
-## Uso quotidiano
+## Daily usage
 
-1. **Sul Worker:** doppio click su `Avvia_Worker_RPC.bat` e lascia aperta la finestra nera.
-2. **Sul Master:** doppio click su `Avvia_Cluster_MASTER.bat`, scegli il modello, premi Invio.
-3. Il browser si apre da solo su `http://localhost:8080` con la chat pronta!
+1. **On the Worker PC:** double-click `Avvia_Worker_RPC.bat` and leave the black window open.
+2. **On the Master PC:** double-click `Avvia_Cluster_MASTER.bat`, choose the model, press Enter.
+3. Your browser opens automatically at `http://localhost:8080` with a ready-to-use chat interface.
 
 ---
 
-## Compatibilita' API
+## API compatibility
 
-Il server espone un endpoint **compatibile con le API OpenAI**:
+The server exposes an **OpenAI-compatible** endpoint at:
 
 ```
 http://127.0.0.1:8080/v1
 ```
 
-Funziona con Continue (VS Code), Open WebUI, script Python, e qualsiasi app che supporti le API OpenAI.
+Works out of the box with Continue (VS Code), Open WebUI, Python scripts, and any app
+that supports the OpenAI API format.
 
 ---
 
-## Quanta VRAM guadagno?
+## How much VRAM do I gain?
 
-| Master GPU      | Worker GPU      | VRAM Totale | Modello consigliato  |
+| Master GPU      | Worker GPU      | Total VRAM  | Recommended model    |
 |-----------------|-----------------|-------------|----------------------|
-| RTX 5070 8GB    | RTX 3050 4GB    | ~12 GB      | Qwen 2.5 32B Q4      |
-| RTX 4090 24GB   | RTX 3080 10GB   | ~34 GB      | Llama 3 70B Q4       |
-| RTX 3080 10GB   | RTX 3060 8GB    | ~18 GB      | Mistral 22B Q4       |
-| Qualsiasi       | Qualsiasi       | Somma VRAM  | In base al totale    |
+| RTX 5070 8GB    | RTX 3050 4GB    | ~12 GB      | Qwen 2.5 32B Q4_K_M  |
+| RTX 4090 24GB   | RTX 3080 10GB   | ~34 GB      | Llama 3 70B Q4_K_M   |
+| RTX 3080 10GB   | RTX 3060 8GB    | ~18 GB      | Mistral 22B Q4_K_M   |
+| Any             | Any             | Sum of VRAM | Depends on total     |
 
-> Nota: la VRAM effettivamente utilizzabile e' circa il 90% per via dell'overhead di sistema.
+> Note: effective usable VRAM is approximately 90% due to system overhead.
 
 ---
 
-## Configurazione avanzata
+## Advanced configuration
 
-### IP personalizzati
+### Custom IP addresses
 
-Per usare IP diversi da quelli di default, modifica le variabili all'inizio di `install-master.ps1`
-e `install-worker.ps1` prima di eseguirli.
+To use different IPs than the defaults, edit the IP variables at the top of
+`install-master.ps1` and `install-worker.ps1` before running them.
 
-### Piu' Worker contemporanei
+### Multiple Workers at the same time
 
-Puoi collegare **piu' PC Worker** contemporaneamente tramite uno switch di rete.
-Esegui `install-worker.ps1` su ogni PC con IP diversi (`192.168.50.2`, `192.168.50.3`, ecc.)
-e nel launcher Master aggiungi tutti gli indirizzi separati da virgola:
+You can connect **multiple Worker PCs** simultaneously using a network switch.
+Run `install-worker.ps1` on each PC with different IPs (`192.168.50.2`, `192.168.50.3`, etc.)
+and add all addresses separated by commas in the Master launcher:
 
 ```
 --rpc 192.168.50.2:50052,192.168.50.3:50052
@@ -112,22 +114,23 @@ e nel launcher Master aggiungi tutti gli indirizzi separati da virgola:
 
 ---
 
-## Domande frequenti
+## FAQ
 
-**Il vecchio PC deve avere il modello scaricato?**
-No. Solo il Master ha bisogno del file `.gguf`. Il Worker espone solo la GPU.
+**Does the Worker PC need the model downloaded?**
+No. Only the Master needs the `.gguf` file. The Worker only contributes its GPU.
 
-**Posso usare il Wi-Fi invece del cavo?**
-Funziona ma con latenza e banda ridotte. Consigliato solo per modelli piccoli (7B).
+**Can I use Wi-Fi instead of a cable?**
+It works but with higher latency and lower bandwidth. Recommended only for small models (7B).
 
-**Funziona con GPU AMD?**
-Il supporto ROCm di llama.cpp e' sperimentale su Windows. Su Linux funziona meglio.
+**Does it work with AMD GPUs?**
+llama.cpp ROCm support is experimental on Windows. It works better on Linux.
 
-**Il vecchio PC deve avere Windows?**
-Lo script e' per Windows. Su Linux puoi avviare manualmente `ggml-rpc-server` con gli stessi parametri.
+**Does the Worker have to run Windows?**
+The install script targets Windows. On Linux you can manually launch `ggml-rpc-server`
+with the same parameters.
 
 ---
 
-## Licenza
+## License
 
-MIT - Basato su [llama.cpp](https://github.com/ggml-org/llama.cpp) di Georgi Gerganov e il team ggml.
+MIT - Built on top of [llama.cpp](https://github.com/ggml-org/llama.cpp) by Georgi Gerganov and the ggml team.
