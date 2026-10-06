@@ -54,7 +54,7 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 }
 
 Write-Banner
-$TOTAL_STEPS = 5
+$TOTAL_STEPS = 6
 
 # ---- STEP 1: Rilevamento GPU -------------------------------------------------
 Write-Step 1 $TOTAL_STEPS "Rilevamento scheda grafica Nvidia..."
@@ -77,9 +77,7 @@ $eth = Get-NetAdapter | Where-Object {
 if (-not $eth) {
     Write-Warn "Cavo Ethernet non rilevato. Collega il cavo CAT6 e riesegui."
 } else {
-    Remove-NetIPAddress -InterfaceIndex $eth.InterfaceIndex -Confirm:$false -ErrorAction SilentlyContinue
-    Remove-NetRoute     -InterfaceIndex $eth.InterfaceIndex -Confirm:$false -ErrorAction SilentlyContinue
-    New-NetIPAddress -InterfaceIndex $eth.InterfaceIndex -AddressFamily IPv4 -IPAddress "192.168.50.2" -PrefixLength 24 | Out-Null
+    netsh interface ipv4 set address name="$($eth.Name)" static 192.168.50.2 255.255.255.0
     Write-Ok "Adattatore '$($eth.Name)' impostato a 192.168.50.2/24"
 }
 
@@ -160,6 +158,13 @@ if ($autoStartChoice -match "^[Ss]") {
     Write-Ok "Task di avvio automatico 'LlamaRPCWorker' registrato."
 }
 
+# ---- STEP 6: Creazione script Ripristino Internet ----------------------------
+Write-Step 6 $TOTAL_STEPS "Creazione script di ripristino Internet..."
+$restorePath = "$desktopFolder\RIPRISTINA_INTERNET_ETHERNET.bat"
+$restoreContent = "@echo off`r`nsetlocal EnableDelayedExpansion`r`ntitle Ripristino Rete Ethernet`r`n`r`n:: Controllo privilegi amministratore`r`nnet session >nul 2>&1`r`nif %errorLevel% neq 0 (`r`n    echo Richiesta permessi di amministratore...`r`n    powershell -Command `"Start-Process cmd -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs`"`r`n    exit /b`r`n)`r`n`r`ncls`r`necho ==============================================================`r`necho    RIPRISTINO SCHEDA ETHERNET PER INTERNET NORMALE`r`necho ==============================================================`r`necho.`r`necho Sto rimettendo la porta Ethernet su `"Automatico`" (DHCP)...`r`necho.`r`n`r`nnetsh interface ipv4 set address name=`"Ethernet`" dhcp`r`nnetsh interface ipv4 set dnsservers name=`"Ethernet`" dhcp`r`n`r`necho.`r`necho [OK] Fatto! Ora puoi attaccare il cavo Ethernet al modem/router`r`necho      e navigherai su internet normalmente.`r`necho.`r`necho ==============================================================`r`npause"
+[System.IO.File]::WriteAllText($restorePath, $restoreContent, [System.Text.Encoding]::ASCII)
+Write-Ok "Creato sul Desktop: RIPRISTINA_INTERNET_ETHERNET.bat"
+
 # ---- FINE -------------------------------------------------------------------
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor Green
@@ -174,4 +179,6 @@ Write-Host ""
 Write-Host " Questo PC risponde a: 192.168.50.2:50052" -ForegroundColor Green
 Write-Host ""
 Pause
+
+
 
